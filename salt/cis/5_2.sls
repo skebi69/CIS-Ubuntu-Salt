@@ -28,7 +28,12 @@
 {% for number, rule in rules.iteritems() %}
 {% if not salt['file.contains_regex']("/etc/ssh/sshd_config", rule) %}
 ({{ number }}) Ensure SSH configuration:
-    test.fail_without_changes:
-        - name: "({{ number }}) /etc/ssh/sshd_config does not have '{{ rule }}' entry"
+#    test.fail_without_changes:
+#        - name: "({{ number }}) /etc/ssh/sshd_config does not have '{{ rule }}' entry"
+    file.replace:
+        - name: /etc/ssh/sshd_config
+        - pattern: {{ rule }}
+        - repl: {{ rule }}
+        - append_if_not_found: true
 {% endif %}
 {% endfor %}

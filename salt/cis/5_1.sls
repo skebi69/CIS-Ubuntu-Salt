@@ -8,7 +8,7 @@
 
 (5.1.1) Ensure cron daemon is enabled:
     service.running:
-        - name: crond
+        - name: cron
         - enable: True
 
 (5.1.2) Ensure permissions on /etc/crontab are configured:

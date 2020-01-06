@@ -16,17 +16,28 @@
 #  The settings shown above are one possible policy. Alter these values to conform to your
 #  own organization's password policies.
 
+# libpam-pwquality is not installed by default - Added by J Kennedy
+{% set rule = '(5.3.0.9)' %}
+{% if salt['pkg.version']('libpam-pwquality') %}
+{{ rule }} ensure libpam-pwquality package is installed:
+    test.succeed_without_changes:
+        - name: {{ rule }} libpam-pwquality package is installed
+{% else %}
+{{ rule }} ensure libpam-pwquality package is installed:
+    pkg.installed:
+        - name: libpam-pwquality
+{% endif %}
 
 (5.3.1) Ensure password creation requirements are configured in /etc/pam.d/password-auth:
     file.replace:
-        - name: /etc/pam.d/password-auth
+        - name: /etc/security/pwquality.conf
         - pattern: ^password    requisite pam_pwquality.so try_first_pass retry=3
         - repl: password requisite pam_pwquality.so try_first_pass retry=3
         - append_if_not_found: True
 
 (5.3.1) Ensure password creation requirements are configured in /etc/pam.d/system-auth:
     file.replace:
-        - name: /etc/pam.d/system-auth
+        - name: /etc/security/pwquality.conf
         - pattern: ^password    requisite pam_pwquality.so try_first_pass retry=3
         - repl: password requisite pam_pwquality.so try_first_pass retry=3
         - append_if_not_found: True
