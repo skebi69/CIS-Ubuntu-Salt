@@ -24,5 +24,5 @@
         - repl: 'GRUB_CMDLINE_LINUX="audit=1"'
         - append_if_not_found: True
     cmd.run:
-        - name: grub2-mkconfig -o /boot/grub2/grub.cfg
+        - name: grub-mkconfig -o /boot/grub/grub.cfg
 {% endif %}

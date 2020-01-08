@@ -1,30 +1,52 @@
-# 1.1.7 Ensure separate partition exists for /var/tmp
+# 1.1.3 - 1.1.5 
+#  1.1.3 Ensure nodev option set on /tmp partition
+#  1.1.4 Ensure nosuid option set on /tmp partition
+#  1.1.5 Ensure nosuid option set on /tmp partition
 # Description:
-# The /var/tmp directory is a world-writable directory used for temporary storage by all
-# users and some applications.
-
+# The nodev mount option specifies that the filesystem cannot contain special devices.
 # Rationale:
-# Since the /var/tmp directory is intended to be world-writable, there is a risk of resource
-# exhaustion if it is not bound to a separate partition. In addition, making /var/tmp its own
-# file system allows an administrator to set the noexec option on the mount, making
-# /var/tmp useless for an attacker to install executable code. It would also prevent an
-# attacker from establishing a hardlink to a system setuid program and wait for it to be
-# updated. Once the program was updated, the hardlink would be broken and the attacker
-# would have his own copy of the program. If the program happened to have a security
-# vulnerability, the attacker could continue to exploit the known flaw.
+# Since the /tmp filesystem is not intended to support devices, set this option to ensure that
+# users cannot attempt to create block or character special devices in /tmp .
 
 {% set rule = '(1.1.7)' %}
 
 {% if salt['mount.is_mounted']('/var/tmp') %}
 
-{{ rule }} /var/tmp on separate partition:
+#    {% set options = salt['mount.fstab']()['/var/tmp']['opts'] %}
+
+#    {% if 'nosuid' in options and 'noexec' in options and 'nodev' in options %}
+
+{{ rule }} /var/tmp nosuid,nodev,noexec:
     test.succeed_without_changes:
-        - name: {{ rule }} /var/tmp is already mounted on separate partition.
+        - name: {{ rule }} /var/tmp already set with nosuid,noexec,nodev.
+
+    {% else %}
+
+
+{{ rule }} unmount /var/tmp:
+    mount.unmounted:
+        - name: tmpfs
+        - device: /var/tmp    
+
+{{ rule }} remount /var/tmp:
+    mount.mounted:
+        - name: /var/tmp
+        - device: /var/tmp
+        - fstype: tmpfs
+        - mkmnt: True
+        - opts:  rw,nodev,noexec,nosuid,seclabel
+        - persist: True
+        - user: root
+
+#    {% endif %}
 
 {% else %}
+{{ rule }} /var/tmp nosuid,nodev,noexec:
+    {% set options = salt['mount.fstab']()['/var/tmp']['opts'] %}
 
-{{ rule }} /var/tmp on separate partition:
-    test.fail_without_changes:
-        - name: {{ rule }} /var/tmp needs to be mounted on a separate partition.
+    {% if 'nosuid' in options and 'noexec' in options and 'nodev' in options %}
 
+    {% endif %}
+#    test.fail_without_changes:
+#        - name: {{ rule }} /var/tmp is not mounted as separate partition, unable to check nosuid,nodev,noexec.
 {% endif %}
